@@ -1,26 +1,29 @@
 ## JiveCake MongoDB
 
-##### restart.sh
-
-`stop` and `rm` the container named `jivecakemongo` and start a new container with port mapping `127.0.0.1:27017:27017` of the same name.
-The first argument, if present, will be used as an mongoDB archive file used to populate the database.
-
-#### Example
+#### Start
 
 ```sh
-bash restart.sh
+docker run \
+  -dit \
+  -v /data/db/:/data/db \
+  --name jivecakemongo \
+  -p private-db.com:27017:27017 \
+  mongo:3.4.6
 ```
 
+#### Load archive into container
+
 ```sh
-bash restart.sh path_to/mongo.archive
+docker cp mongo.archive jivecakemongo:/root/backup.archive
+docker exec -it jivecakemongo mongorestore --archive=/root/backup.archive
+docker exec -it jivecakemongo rm /root/backup.archive
 ```
 
-##### backup.sh
-
-Extracts a mongoDB archive from the container named `jivecakemongo` and writes it to the `~/backup` directory at the argument machine . Machine user is `root`.
-
-#### Example
+#### Retrieve archive from image
 
 ```sh
-bash backup.sh database.project.com
+TIMESTAMP=$(date -u +%Y-%m-%d-%H-%M-%S)
+docker exec -it jivecakemongo mongodump --archive=/data/mongo-$TIMESTAMP.archive
+docker cp jivecakemongo:/data/mongo-$TIMESTAMP.archive ~/mongo-$TIMESTAMP.archive
+docker exec -it jivecakemongo rm /data/mongo-$TIMESTAMP.archive
 ```
